@@ -1,0 +1,11 @@
+# Compiled Lua sources
+luac.out
+
+# LuaCov files
+*.report.out
+*.stats.out
+
+# luarocks build files
+*.rock
+*.zip
+*.tar.gz

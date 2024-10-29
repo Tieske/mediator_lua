@@ -1,0 +1,58 @@
+name: "Unix build"
+
+concurrency:
+  # for PR's cancel the running task, if another commit is pushed
+  group: ${{ github.workflow }} ${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+on:
+  # build on PR and push-to-master. This works for short-lived branches, and saves
+  # CPU cycles on duplicated tests.
+  # For long-lived branches that diverge, you'll want to run on all pushes, not
+  # just on push-to-master.
+  pull_request: {}
+  push:
+    branches:
+    - master
+
+jobs:
+  test:
+    runs-on: ubuntu-20.04
+
+    strategy:
+      fail-fast: false
+      matrix:
+        luaVersion: ["5.1", "5.2", "5.3", "5.4", "luajit", "luajit-openresty"]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - uses: hishamhm/gh-actions-lua@master
+      with:
+        luaVersion: ${{ matrix.luaVersion }}
+
+    - uses: hishamhm/gh-actions-luarocks@master
+      with:
+        luarocksVersion: "3.11.0"
+
+    - name: dependencies
+      # install test deps, but remove default 'mediator_lua' package
+      run: |
+        luarocks install busted
+        luarocks install luacov-coveralls
+        luarocks remove --force mediator_lua
+
+    - name: build
+      run: |
+        luarocks make
+
+    - name: test
+      run: |
+        busted --coverage --Xoutput "--color"
+
+    - name: Report test coverage
+      if: success()
+      continue-on-error: true
+      run: luacov-coveralls
+      env:
+        COVERALLS_REPO_TOKEN: ${{ github.token }}
