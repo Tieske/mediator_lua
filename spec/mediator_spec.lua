@@ -1,6 +1,6 @@
 describe("mediator", function()
   local Mediator = require 'mediator'
-  local c, testfn, testfn2, testfn3
+  local m, c, testfn, testfn2, testfn3
 
   before_each(function()
     m = Mediator()
@@ -19,14 +19,14 @@ describe("mediator", function()
   end)
 
   it("can register subscribers", function()
-    local sub1 = c:addSubscriber(testfn)
+    c:addSubscriber(testfn)
 
     assert.are.equal(#c.callbacks, 1)
     assert.are.equal(c.callbacks[1].fn, testfn)
   end)
 
   it("can register lots of subscribers", function()
-    local sub1 = c:addSubscriber(testfn)
+    c:addSubscriber(testfn)
     local sub2 = c:addSubscriber(testfn2)
 
     assert.are.equal(#c.callbacks, 2)
@@ -34,8 +34,8 @@ describe("mediator", function()
   end)
 
   it("can register subscribers with specified priorities", function()
-    local sub1 = c:addSubscriber(testfn)
-    local sub2 = c:addSubscriber(testfn2)
+    c:addSubscriber(testfn)
+    c:addSubscriber(testfn2)
     local sub3 = c:addSubscriber(testfn3, { priority = 1 })
 
     assert.are.equal(c.callbacks[1].fn, sub3.fn)
@@ -43,15 +43,15 @@ describe("mediator", function()
 
   it("can return subscribers", function()
     local sub1 = c:addSubscriber(testfn)
-    local sub2 = c:addSubscriber(testfn2)
+    c:addSubscriber(testfn2)
 
-    gotten = c:getSubscriber(sub1.id)
+    local gotten = c:getSubscriber(sub1.id)
 
     assert.are.equal(gotten.value, sub1)
   end)
 
   it("can change subscriber priority forward after being added", function()
-    local sub1 = c:addSubscriber(testfn)
+    c:addSubscriber(testfn)
     local sub2 = c:addSubscriber(testfn2)
 
     c:setPriority(sub2.id, 1)
@@ -61,7 +61,7 @@ describe("mediator", function()
 
   it("can change subscriber priority backwards after being added", function()
     local sub1 = c:addSubscriber(testfn)
-    local sub2 = c:addSubscriber(testfn2)
+    c:addSubscriber(testfn2)
 
     c:setPriority(sub1.id, 2)
 
@@ -84,7 +84,7 @@ describe("mediator", function()
   end)
 
   it("can remove subscribers by id", function()
-    local sub1 = c:addSubscriber(testfn)
+    c:addSubscriber(testfn)
     local sub2 = c:addSubscriber(testfn2)
 
     c:removeSubscriber(sub2.id)
@@ -97,7 +97,7 @@ describe("mediator", function()
 
     local sub1 = c.channels["level2"]:addSubscriber(testfn)
 
-    gotten = c:getSubscriber(sub1.id)
+    local gotten = c:getSubscriber(sub1.id)
 
     assert.are.equal(gotten.value, sub1)
   end)
@@ -120,17 +120,19 @@ describe("mediator", function()
       olddata = data
     end
 
-    local sub1 = c:addSubscriber(assertFn)
+    c:addSubscriber(assertFn)
     c:publish({}, data)
 
     assert.is.truthy(olddata.test)
   end)
 
   it("ignores if you publish to a nonexistant subchannel", function()
+    local data = { test = true }
     assert.is_not.error(function() m:publish({ "nope" }, data) end)
   end)
 
   it("ignores if you publish to a nonexistant subchannel with subchannels", function()
+    local data = { test = true }
     assert.is_not.error(function() m:publish({ "nope", "wat" }, data) end)
   end)
 
@@ -142,7 +144,7 @@ describe("mediator", function()
       arguments = { data, wat, seven }
     end
 
-    local sub1 = c:addSubscriber(assertFn)
+    c:addSubscriber(assertFn)
     c:publish({}, "test", data, "wat", "seven")
 
     assert.are.equal(#arguments, 3)
@@ -161,8 +163,8 @@ describe("mediator", function()
       olddata = data2
     end
 
-    local sub1 = c:addSubscriber(assertFn)
-    local sub2 = c:addSubscriber(assertFn2)
+    c:addSubscriber(assertFn)
+    c:addSubscriber(assertFn2)
 
     c:publish({}, data)
 
@@ -179,7 +181,7 @@ describe("mediator", function()
 
     c:addChannel("level2")
 
-    local sub1 = c.channels["level2"]:addSubscriber(assertFn)
+    c.channels["level2"]:addSubscriber(assertFn)
 
     c.channels["level2"]:publish({}, data)
 
@@ -192,9 +194,7 @@ describe("mediator", function()
   end)
 
   it("can publish to channels from the mediator level", function()
-    local assertFn = function(data, channel)
-      olddata = data
-    end
+    local assertFn = function(data, channel) end
 
     local s = m:subscribe({"test"}, assertFn)
 
@@ -216,9 +216,7 @@ describe("mediator", function()
   end)
 
   it("can return a subscriber at the mediator level", function()
-    local assertFn = function(data, channel)
-      olddata = data
-    end
+    local assertFn = function(data, channel) end
 
     local s = m:subscribe({"test"}, assertFn)
 
@@ -227,9 +225,7 @@ describe("mediator", function()
 
 
   it("can remove a subscriber at the mediator level", function()
-    local assertFn = function(data)
-      olddata = data
-    end
+    local assertFn = function(data) end
 
     local s = m:subscribe({"test"}, assertFn)
 
@@ -247,7 +243,7 @@ describe("mediator", function()
       olddata = data
     end
 
-    local s = m:subscribe({"test"}, assertFn)
+    m:subscribe({"test"}, assertFn)
     m:publish({ "test" }, "hi")
 
     assert.are.equal(olddata, "hi")
@@ -269,8 +265,8 @@ describe("mediator", function()
 
     c:addChannel("level2")
 
-    local s = m:subscribe({ "test", "level2" }, assertFn)
-    local s2 = m:subscribe({ "test" }, assertFn2)
+    m:subscribe({ "test", "level2" }, assertFn)
+    m:subscribe({ "test" }, assertFn2)
 
     m:publish({ "test", "level2" }, "didn't read lol")
 
@@ -296,8 +292,8 @@ describe("mediator", function()
 
     c:addChannel("level2")
 
-    local s = m:subscribe({"test","level2"}, assertFn)
-    local s2 = m:subscribe({"test"}, assertFn2, { predicate = predicate })
+    m:subscribe({"test","level2"}, assertFn)
+    m:subscribe({"test"}, assertFn2, { predicate = predicate })
 
     m:publish({"test", "level2"}, "didn't read lol")
 
