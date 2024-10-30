@@ -1,8 +1,9 @@
 describe("mediator", function()
-  local Mediator = require 'mediator'
+  local Mediator
   local m, c, testfn, testfn2, testfn3
 
   before_each(function()
+    Mediator = require("mediator")
     m = Mediator()
     c = Mediator.Channel("test")
     testfn = function() end
@@ -66,6 +67,21 @@ describe("mediator", function()
     c:setPriority(sub1.id, 2)
 
     assert.are.equal(c.callbacks[2], sub1)
+  end)
+
+  it("keeps subscriber priority within bounds upon change", function()
+    local sub1 = c:addSubscriber(testfn)
+    local sub2 = c:addSubscriber(testfn2)
+    assert.are.equal(c.callbacks[1], sub1)
+    assert.are.equal(c.callbacks[2], sub2)
+
+    c:setPriority(sub1.id, 99)
+    assert.are.equal(c.callbacks[2], sub1)
+    assert.are.equal(c.callbacks[1], sub2)
+
+    c:setPriority(sub1.id, 0)
+    assert.are.equal(c.callbacks[1], sub1)
+    assert.are.equal(c.callbacks[2], sub2)
   end)
 
   it("can add subchannels", function()
