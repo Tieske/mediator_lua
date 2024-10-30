@@ -101,8 +101,8 @@ local function Channel(namespace, parent)
         end
       end
 
-      if parent then
-        return parent:publish(result, ...)
+      if self.parent then
+        return self.parent:publish(result, ...)
       else
         return result
       end
