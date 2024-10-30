@@ -2,11 +2,11 @@ local function getUniqueId(obj)
   return tonumber(tostring(obj):match(':%s*[0xX]*(%x+)'), 16)
 end
 
-local function Subscriber(fn, options)
+local function Subscriber(fn, options, channel)
   local sub = {
     options = options or {},
     fn = fn,
-    channel = nil,
+    channel = channel,
     update = function(self, options)
       if options then
         self.fn = options.fn or self.fn
@@ -22,7 +22,6 @@ end
 
 local function Channel(namespace, parent)
   return {
-    stopped = false,
     namespace = namespace,
     callbacks = {},
     channels = {},
@@ -35,7 +34,7 @@ local function Channel(namespace, parent)
       priority = math.max(math.min(math.floor(priority), #self.callbacks + 1), 1)
       options.priority = nil
 
-      local callback = Subscriber(fn, options)
+      local callback = Subscriber(fn, options, self)
 
       table.insert(self.callbacks, priority, callback)
 
