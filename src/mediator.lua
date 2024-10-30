@@ -29,17 +29,13 @@ local function Channel(namespace, parent)
     parent = parent,
 
     addSubscriber = function(self, fn, options)
-      local callback = Subscriber(fn, options)
-      local priority = (#self.callbacks + 1)
-
       options = options or {}
 
-      if options.priority and
-        options.priority >= 0 and
-        options.priority < priority
-      then
-          priority = options.priority
-      end
+      local priority = options.priority or (#self.callbacks + 1)
+      priority = math.max(math.min(math.floor(priority), #self.callbacks + 1), 1)
+      options.priority = nil
+
+      local callback = Subscriber(fn, options)
 
       table.insert(self.callbacks, priority, callback)
 
@@ -61,6 +57,8 @@ local function Channel(namespace, parent)
 
     setPriority = function(self, id, priority)
       local callback = self:getSubscriber(id)
+
+      priority = math.max(math.min(math.floor(priority), #self.callbacks), 1)
 
       if callback.value then
         table.remove(self.callbacks, callback.index)
