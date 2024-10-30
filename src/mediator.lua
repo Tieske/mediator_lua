@@ -43,16 +43,13 @@ local function Channel(namespace, parent)
     end,
 
     getSubscriber = function(self, id)
-      for i=1, #self.callbacks do
-        local callback = self.callbacks[i]
+      for i, callback in ipairs(self.callbacks) do
         if callback.id == id then return { index = i, value = callback } end
       end
-      local sub
       for _, channel in pairs(self.channels) do
-        sub = channel:getSubscriber(id)
-        if sub then break end
+        local sub = channel:getSubscriber(id)
+        if sub then return sub end
       end
-      return sub
     end,
 
     setPriority = function(self, id, priority)
